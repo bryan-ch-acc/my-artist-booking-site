@@ -1,0 +1,44 @@
+# Python virtual environments
+env/
+venv/
+.Python
+
+# pyenv local version file
+.python-version
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+*.egg
+
+# Logs and runtime files
+*.log
+error.log
+instance/
+
+# Flask stuff
+*.db
+*.sqlite3
+
+# Environments
+.env
+
+# Node modules
+node_modules/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
