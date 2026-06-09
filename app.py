@@ -132,19 +132,48 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }
-  
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  try:
+    # TODO: implement search on venues with partial string search. Ensure it is case-insensitive.
+    # seach for Hop should return "The Musical Hop".
+    # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+
+    search_term = request.form.get('search_term', '')
+    venue_results = (
+      db.session.query(
+        Venue.id,
+        Venue.name,
+        Venue.city,
+        Venue.state,
+        db.func.count(Show.id).label('num_upcoming_shows')
+      )
+      .outerjoin(
+        Show,
+        db.and_(
+          Show.venue_id == Venue.id,
+          Show.start_time > datetime.now()
+        )
+      )
+      .filter(Venue.name.ilike(f'%{search_term}%'))
+      .group_by(Venue.id, Venue.name)
+      .all()
+    )
+
+    response = {
+      "count": len(venue_results),
+      "data": [{
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": venue.num_upcoming_shows
+      } for venue in venue_results]
+    }
+
+    return render_template(
+    'pages/search_venues.html',
+      results=response,
+      search_term=search_term
+    )
+  except Exception as e:
+    return render_template('errors/500.html', error=e), 500
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -305,15 +334,43 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
-  }
-  return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+  try:
+    search_term = request.form.get('search_term', '')
+
+    artist_results = (
+      db.session.query(
+        Artist.id,
+        Artist.name,
+        db.func.count(Show.id).label('num_upcoming_shows')
+      )
+      .outerjoin(
+        Show,
+        db.and_(
+          Show.artist_id == Artist.id,
+          Show.start_time > datetime.now()
+        )
+      )
+      .filter(Artist.name.ilike(f'%{search_term}%'))
+      .group_by(Artist.id, Artist.name)
+      .all()
+    )
+
+    response = {
+      "count": len(artist_results),
+      "data": [{
+        "id": artist.id,
+        "name": artist.name,
+        "num_upcoming_shows": artist.num_upcoming_shows
+      } for artist in artist_results]
+    }
+
+    return render_template(
+      'pages/search_artists.html',
+      results=response,
+      search_term=search_term
+    )
+  except Exception as e:
+    return render_template('errors/500.html', error=e), 500
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
